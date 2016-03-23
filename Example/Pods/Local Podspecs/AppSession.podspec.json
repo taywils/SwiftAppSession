@@ -1,0 +1,25 @@
+{
+  "name": "AppSession",
+  "version": "0.1.0",
+  "summary": "A short description of AppSession.",
+  "description": "",
+  "homepage": "https://github.com/<GITHUB_USERNAME>/AppSession",
+  "license": "MIT",
+  "authors": {
+    "taywils": "DemetriousWilson@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/<GITHUB_USERNAME>/AppSession.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "requires_arc": true,
+  "source_files": "Pod/Classes/**/*",
+  "resource_bundles": {
+    "AppSession": [
+      "Pod/Assets/*.png"
+    ]
+  }
+}

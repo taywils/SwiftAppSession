@@ -1,0 +1,14 @@
+PODS:
+  - AppSession (0.1.0)
+
+DEPENDENCIES:
+  - AppSession (from `../`)
+
+EXTERNAL SOURCES:
+  AppSession:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  AppSession: aad22e278a4ecd55482f7f9112867afa9eba8365
+
+COCOAPODS: 0.39.0

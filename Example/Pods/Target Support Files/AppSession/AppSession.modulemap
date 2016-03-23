@@ -1,0 +1,6 @@
+framework module AppSession {
+  umbrella header "AppSession-umbrella.h"
+
+  export *
+  module * { export * }
+}
