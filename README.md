@@ -25,8 +25,6 @@ use_frameworks!
 pod 'AppSession', :git => 'https://github.com/taywils/SwiftAppSession.git'
 ```
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
-
 # Basic Usage
 
 AppSession uses the [sharedInstance](https://thatthinginswift.com/singletons/) pattern to represent a Singleton.
