@@ -6,6 +6,8 @@
     <img src="https://img.shields.io/badge/platform-iOS%209%2B-blue.svg?style=flat" alt="Platform: iOS 9+" />
     <a href="https://developer.apple.com/swift"><img src="https://img.shields.io/badge/language-swift2-f48041.svg?style=flat" alt="Language: Swift 2" /></a>
     <img src="http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat" alt="License: MIT" />
+    <a href="http://cocoadocs.org/docsets/AppSession"><img src="https://cocoapod-badges.herokuapp.com/v/AppSession/badge.png" alt="Docs" /></a>
+
 </p>
 
 # Introduction
@@ -13,6 +15,10 @@
 AppSession is a simple wrapper around a dictionary type that allows one
 to easily share data across different SpriteKit Scenes and or ViewControllers
 for the duration of a single session of an App.
+
+## Planned Features
+* [ ] Manage Multiple Sessions
+* [ ] Async Operations
 
 ## Installation
 
