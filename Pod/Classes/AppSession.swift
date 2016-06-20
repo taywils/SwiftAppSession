@@ -1,6 +1,8 @@
 import Foundation
 
-public protocol AppSessionable {
+// MARK: - AppSessionable
+
+private protocol AppSessionable {
     
     associatedtype ValueType
     
@@ -12,7 +14,9 @@ public protocol AppSessionable {
     init(key: String, value: ValueType, group: String?)
 }
 
-public struct AppItem<T> {
+// MARK: - AppItem
+
+private struct AppItem<T> {
     private var _key: String
     private var _value: T
     private var _group: String?
@@ -20,31 +24,31 @@ public struct AppItem<T> {
 
 extension AppItem : AppSessionable {
     
-    public init(key: String, value: T, group: String? = nil) {
-        self._key = key
+    private init(key: String, value: T, group: String? = nil) {
+        self._key = key.lowercaseString
         self._value = value
         self._group = group
     }
     
-    public var key: String {
+    private var key: String {
         return self._key
     }
     
-    public var group: String? {
+    private var group: String? {
         return self._group
     }
     
-    public var value: T {
+    private var value: T {
         return self._value
     }
     
-    public var typeString: String {
+    private var typeString: String {
         return "\(T.self)"
     }
 }
 
 extension AppItem : CustomStringConvertible {
-    public var description : String {
+    private var description : String {
         let groupName = _group ?? ""
         if groupName.isEmpty {
             return "\"\(_key)\": value: (\(_value)), type: \(typeString)"
@@ -54,16 +58,15 @@ extension AppItem : CustomStringConvertible {
     }
 }
 
+// MARK: - AppSession
+
 /// ### AppSession
 /// A simple wrapper around a dictionary type that allows one to easily share data
 public class AppSession {
     
-    // MARK: Properties
+    // MARK: public Properties
     
     public static let sharedInstance = AppSession()
-    
-    private var _storage: [String: Any] = [:]
-    private var _typeStore: [String: String] = [:]
     
     public static var count: Int {
         return AppSession.sharedInstance._storage.count
@@ -72,6 +75,45 @@ public class AppSession {
     public static var keys: Set<String> {
         return Set(Array(AppSession.sharedInstance._storage.keys))
     }
+    
+    // MARK: private Properties
+
+    private var _storage: [String: Any] = [:]
+    
+    private class KeyGroupMap {
+        
+        private var keyGroups = [String:String]()
+        
+        func insertByKey(key: String, groupName: String) {
+            keyGroups[key.lowercaseString] = groupName
+        }
+        
+        func removeByKey(key: String) {
+            keyGroups.removeValueForKey(key.lowercaseString)
+        }
+        
+        func removeByGroup(groupName: String) {
+            let keyGroupsWithoutGroup = keyGroups.filter { (k, v) -> Bool in
+                v != groupName.lowercaseString
+            }
+            
+            var newKeyGroups = [String:String]()
+            for pair in keyGroupsWithoutGroup {
+                newKeyGroups[pair.0.lowercaseString] = pair.1.lowercaseString
+            }
+            
+            keyGroups = newKeyGroups
+        }
+        
+        func checkForGroup(groupName: String) -> Bool {
+            let keysForGroup = keyGroups.filter { (_, group) -> Bool in
+                group.lowercaseString == groupName.lowercaseString
+            }
+            
+            return !keysForGroup.isEmpty
+        }
+    }
+    private static let keygroupMap = KeyGroupMap()
     
     // MARK: Initialization
     
@@ -85,39 +127,35 @@ public class AppSession {
     /// - Parameter group(Optional): Name used to lump key-value pairs together
     public static func set<T>(key: String, value: T, group: String? = nil) {
         if key.isEmpty { return }
+        
+        let theKey = key.lowercaseString
 
         if let groupKey = group where !groupKey.isEmpty {
-            AppSession.appendGroupValue( key.lowercaseString,
-                value: AppItem<T>(key: key, value: value, group: group),
-                groupKey: groupKey.lowercaseString
-            )
-        } else {
-            AppSession.sharedInstance._storage[key.lowercaseString] = AppItem<T>(key: key, value: value)
+            keygroupMap.insertByKey(theKey, groupName: groupKey.lowercaseString)
         }
+        
+        AppSession.sharedInstance._storage[theKey] = AppItem<T>(key: theKey, value: value)
     }
     
-    /// Returns a value from the AppSession based on the key
+    /// Returns stored value from the AppSession
     /// - Parameter key: Name used to reference the session data
-    /// - Returns: Data from the Session to be type-casted
-    public static func get<T>(key: String) -> AppItem<T> {
-        if let appItem:AppItem<T> = AppSession.sharedInstance._storage[key] as? AppItem<T> {
-            return appItem
-        } else {
-            let storedValue  = AppSession.sharedInstance._storage[key]!
-            let wrappedItem  = storedValue as! AppItem<Optional<T>>
-            let reCastedItem = AppItem<T>(key: key, value: wrappedItem.value!)
-            return reCastedItem
-        }
-        //return AppSession.extract(key)
+    public static func get<T>(key: String) -> T {
+        return AppSession.getItem(key.lowercaseString).value
     }
     
     /// Performs a delete and retrieve from the Session based on the reference key
     /// - Parameter key: Name used to reference the session data
     /// - Returns: Data from the Session to be type-casted
-    public static func pop(key: String) -> Any {
-        let copy = AppSession.extract(key)
-        AppSession.delete(key)
-        return copy
+    public static func pop<T>(key: String) -> T {
+        let theKey = key.lowercaseString
+        
+        defer {
+            AppSession.delete(theKey)
+        }
+        
+        let value: T = AppSession.get(theKey)
+        
+        return value
     }
     
     /// Deletes all values from the session
@@ -138,7 +176,7 @@ public class AppSession {
         return AppSession.keys.contains(key.lowercaseString)
     }
     
-    /// info: Prints debug info about the contents of the AppSession
+    /// Prints debug info about the contents of the AppSession
     public static func info() {
         print("Count = \(AppSession.sharedInstance._storage.count)")
         for (_, val) in AppSession.sharedInstance._storage {
@@ -148,38 +186,28 @@ public class AppSession {
     
     // MARK: Private Methods
     
-    /// extract: Given a key, returns the Session data
+    /// Returns a value from the AppSession based on the key
     /// - Parameter key: Name used to reference the session data
     /// - Returns: Data from the Session to be type-casted
-    private static func extract(key: String) -> Any {
-        return unwrap(unwrap(AppSession.sharedInstance._storage[key.lowercaseString]))
-    }
-    
-    /// appendGroup: Inserts a new key value pair into the AppSession under the provided group name
-    /// - Parameter key: Name used to reference the session data
-    /// - Parameter value: Data referenced by the key
-    /// - Parameter groupKey: Name used to lump key-value pairs together
-    private static func appendGroupValue<T>(key: String, value: T, groupKey: String) {
-        if AppSession.keys.contains(groupKey.lowercaseString) {
-            var currentGroup = (AppSession.sharedInstance._storage[groupKey.lowercaseString] as? [String:Any])
-            currentGroup?[key] = value
-            AppSession.sharedInstance._storage[groupKey.lowercaseString] = currentGroup
-        } else {
-            var newGroup = [String: Any]()
-            newGroup[key.lowercaseString] = value
-            AppSession.sharedInstance._storage[groupKey.lowercaseString] = newGroup
-        }
-    }
-    
-    /// [http://stackoverflow.com/questions/27989094/how-to-unwrap-an-optional-value-from-any-type](http://stackoverflow.com/questions/27989094)
-    private static func unwrap(any:Any) -> Any {
-        let mi = Mirror(reflecting: any)
-        if mi.displayStyle != .Optional {
-            return any
-        }
+    private static func getItem<T>(key: String) -> AppItem<T> {
+        let theKey = key.lowercaseString
         
-        if mi.children.count == 0 { return NSNull() }
-        let (_, some) = mi.children.first!
-        return some
+        if let appItem:AppItem<T> = AppSession.sharedInstance._storage[theKey] as? AppItem<T> {
+            return appItem
+        } else {
+            let storedValue  = AppSession.sharedInstance._storage[theKey]
+            
+            if let wrappedItem = storedValue as? AppItem<Optional<T>> {
+                let reCastedItem = AppItem<T>(key: theKey, value: wrappedItem.value!)
+                
+                return reCastedItem
+            } else {
+                // Handle case where storedValue is 'Any' a.k.a 'protocol<>'
+                let fromStorage = storedValue as! AppItem<Any>
+                let recastedItem = AppItem<T>(key: theKey, value: fromStorage.value as! T)
+                
+                return recastedItem
+            }
+        }
     }
 }
