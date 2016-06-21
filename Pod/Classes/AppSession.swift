@@ -58,6 +58,13 @@ extension AppItem : CustomStringConvertible {
     }
 }
 
+// MARK: - AppSessionError
+
+public enum AppSessionError: ErrorType {
+    
+    case KeyNotFound
+}
+
 // MARK: - AppSession
 
 /// ### AppSession
@@ -105,9 +112,21 @@ public class AppSession {
             keyGroups = newKeyGroups
         }
         
+        func allKeysInGroup(groupName: String) -> [String] {
+            var keys = [String]()
+            
+            for (key, group) in keyGroups {
+                if group == groupName.lowercaseString {
+                    keys.append(key)
+                }
+            }
+            
+            return keys
+        }
+        
         func checkForGroup(groupName: String) -> Bool {
             let keysForGroup = keyGroups.filter { (_, group) -> Bool in
-                group.lowercaseString == groupName.lowercaseString
+                group == groupName
             }
             
             return !keysForGroup.isEmpty
@@ -139,23 +158,48 @@ public class AppSession {
     
     /// Returns stored value from the AppSession
     /// - Parameter key: Name used to reference the session data
-    public static func get<T>(key: String) -> T {
-        return AppSession.getItem(key.lowercaseString).value
+    public static func get<T>(key: String) throws -> T {
+        let theKey = key.lowercaseString
+        
+        guard let _ = AppSession.sharedInstance._storage[theKey] else {
+            throw AppSessionError.KeyNotFound
+        }
+        
+        return AppSession.getItem(theKey).value
+    }
+    
+    public static func group(groupName: String) throws -> [String: Any] {
+        var appItemKeyValueMap = [String: Any]()
+        
+        if !keygroupMap.checkForGroup(groupName.lowercaseString) {
+            return appItemKeyValueMap
+        }
+        
+        for key in keygroupMap.allKeysInGroup(groupName.lowercaseString) {
+            do {
+                try appItemKeyValueMap[key.lowercaseString] = AppSession.get(key.lowercaseString)
+            } catch AppSessionError.KeyNotFound {
+                continue
+            }
+        }
+        
+        return appItemKeyValueMap
     }
     
     /// Performs a delete and retrieve from the Session based on the reference key
     /// - Parameter key: Name used to reference the session data
     /// - Returns: Data from the Session to be type-casted
-    public static func pop<T>(key: String) -> T {
+    public static func pop<T>(key: String) throws -> T {
         let theKey = key.lowercaseString
         
-        defer {
+        do {
+            let value: T = try AppSession.get(theKey)
             AppSession.delete(theKey)
+            keygroupMap.removeByKey(theKey)
+            return value
+        } catch AppSessionError.KeyNotFound {
+            throw AppSessionError.KeyNotFound
         }
-        
-        let value: T = AppSession.get(theKey)
-        
-        return value
     }
     
     /// Deletes all values from the session
@@ -166,7 +210,10 @@ public class AppSession {
     /// Deletes a single value from the session based on the key
     /// - Parameter key: Name used to reference the session data
     public static func delete(key: String) {
-        AppSession.sharedInstance._storage.removeValueForKey(key.lowercaseString)
+        let theKey = key.lowercaseString
+        if AppSession.contains(theKey) {
+            AppSession.sharedInstance._storage.removeValueForKey(theKey)
+        }
     }
     
     /// Given a key, returns true if the session contains a value mapped to it.
