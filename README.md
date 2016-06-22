@@ -28,7 +28,9 @@ it, simply add the following line to your Podfile:
 ```ruby
 use_frameworks!
 
-pod 'AppSession', :git => 'https://github.com/taywils/SwiftAppSession.git'
+target "Your_Project_Target_Here" do
+  pod 'AppSession', '0.0.1'
+end
 ```
 
 # Basic Usage
@@ -205,7 +207,7 @@ So during the creation/debugging of one of my SpriteKit games I started building
 based on any arbitrary game data; I extracted the code from my game and re-named it AppSession.
 
 ## What AppSession Is Not
-* A replacment for Core Data
+* A replacement for Core Data
 * A replacement for Realm
 * A replacement for NSKeyedArchiver
 * A replacement for NSUserDefaults
