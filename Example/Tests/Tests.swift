@@ -59,14 +59,13 @@ class AppSessionTests: XCTestCase {
         AppSession.set("3d", value: array3D)
         XCTAssertEqual(8, AppSession.count)
     }
-
+    
     func testAppSessionGet() {
         let primitiveType = "Bar"
         
         AppSession.set("foo", value: primitiveType)
-
-        let fooItem = try? AppSession.get("foo") as String
-        XCTAssertEqual(primitiveType, fooItem)
+        
+        XCTAssertEqual(primitiveType, AppSession.get("foo") as? String)
         
         struct BasicStruct {
             var property: String
@@ -76,12 +75,13 @@ class AppSessionTests: XCTestCase {
             }
         }
         let basicStruct = BasicStruct(property: "hello world")
-
+        
         AppSession.set("basic_struct", value: basicStruct)
-
-        let basicStructfromSession: BasicStruct? = try? AppSession.get("basic_struct")
+        
+        let basicStructfromSession = AppSession.get("basic_struct") as? BasicStruct
+        
         XCTAssertEqual(basicStructfromSession?.property, basicStruct.property)
-
+        
         let array3D: [[[Int]]] = [
             [[1, 2], [3, 4]],
             [[5, 6], [7, 8]]
@@ -89,20 +89,13 @@ class AppSessionTests: XCTestCase {
         
         AppSession.set("3d", value: array3D)
         
-        let array3dFromSession = try! AppSession.get("3d") as [[[Int]]]
-        XCTAssertEqual(array3D[0][1], array3dFromSession[0][1])
-        
-        var optionalInt: Int?
-        optionalInt = 42
-        AppSession.set("opt", value: optionalInt)
-        
-        let optionalIntFromSession: Int? = try? AppSession.get("opt")
-        XCTAssertEqual(optionalInt, optionalIntFromSession)
-        
-        let valueForMissingKeyWillBeNil: Int? = try? AppSession.get("not found")
-        XCTAssertNil(valueForMissingKeyWillBeNil)
+        if let array3dFromSession = AppSession.get("3d") as? [[[Int]]] {
+            XCTAssertEqual(array3D[0][1], array3dFromSession[0][1])
+        } else {
+            XCTFail("Failed to store nested array type")
+        }
     }
-
+    
     func testAppSessionReferenceValues() {
         /* WARNING: Storing reference types within AppSession could lead to accidental state changes */
         // Create a class
@@ -122,167 +115,155 @@ class AppSessionTests: XCTestCase {
         
         // Store the class in the session
         AppSession.set("basic_class", value: basicClass)
-        XCTAssertEqual("42", try? (AppSession.get("basic_class") as BasicClass).method())
+        
+        XCTAssertEqual("42", (AppSession.get("basic_class") as? BasicClass)?.method())
         
         // Outside of the session update the class
         let nuValue = 777
         basicClass?.prop = nuValue
-
+        
         // Pull the class data out from the session
-        let basicClassFromSession = try! AppSession.get("basic_class") as BasicClass
+        let basicClassFromSession = AppSession.get("basic_class") as? BasicClass
         
         // The class data pulled from the session should be updated since it shares a reference with the original class
-        XCTAssertEqual(String(nuValue), basicClassFromSession.method())
-        XCTAssertNotEqual(String(ogValue), basicClassFromSession.method())
-    }
-
-    func testAppSessionWhereValueTypeIsDynamic() {
-        var thing: Any
-        thing = "String"
-        // TODO: AppSession.set("dynamicString", value: thing, group: "grp")
-        
-        AppSession.set("dynamicString", value: thing)
-        
-        let wat: String = try! AppSession.get("dynamicString")
-        
-        XCTAssertEqual(thing as? String, wat)
+        XCTAssertEqual(String(nuValue), basicClassFromSession?.method())
+        XCTAssertNotEqual(String(ogValue), basicClassFromSession?.method())
     }
     
-//    func testAppSessionCopyValues() {
-//        let ogValue = "og"
-//        let nuValue = "nv"
-//        var testVar = ogValue
-//        
-//        AppSession.set("TEST", value: testVar)
-//        
-//        XCTAssertEqual(ogValue, AppSession.get("tESt") as String)
-//        
-//        testVar = nuValue
-//        
-//        XCTAssertEqual(ogValue, (AppSession.get("Test") as String))
-//        XCTAssertNotEqual(nuValue, (AppSession.get("tesT") as String))
-//    }
-//
-//    func testAppSessionKeys() {
-//        AppSession.set("a", value: 1)
-//        AppSession.set("b", value: 2)
-//        AppSession.set("c", value: 3)
-//        
-//        XCTAssertTrue(AppSession.keys.contains("a"))
-//        XCTAssertTrue(AppSession.keys.contains("b"))
-//        XCTAssertTrue(AppSession.keys.contains("c"))
-//        
-//        XCTAssertFalse(AppSession.keys.contains("d"))
-//    }
-    
-//    func testGroups() {
-//        AppSession.set("main_dish", value: "Steak", group: "order")
-//        AppSession.set("side_dish", value: "Salad", group: "order")
-//        AppSession.set("coupon", value: "12231", group: "order")
-//        
-//        XCTAssertEqual(1, AppSession.count)
-//        AppSession.info()
-//
-//        let orderGroup = (AppSession.get("order") as AppItem<[String:Any]>).value
-//        XCTAssertEqual(3, orderGroup.count)
+    func testAppSessionCopyValues() {
+        let ogValue = "og"
+        let nuValue = "nv"
+        var testVar = ogValue
         
-//        let mainDishName = orderGroup["main_dish"] as? String
-//        XCTAssertEqual("Steak", mainDishName)
-//        
-//        let sideDishName = orderGroup["side_dish"] as? String
-//        XCTAssertEqual("Salad", sideDishName)
-//        
-//        let couponCode = orderGroup["coupon"] as? String
-//        XCTAssertEqual("12231", couponCode)
-//    }
+        AppSession.set("test", value: testVar)
+        
+        XCTAssertEqual(ogValue, AppSession.get("test") as? String)
+        
+        testVar = nuValue
+        
+        XCTAssertEqual(ogValue, AppSession.get("test") as? String)
+        XCTAssertNotEqual(nuValue, AppSession.get("test") as? String)
+    }
     
-//    func testAppSessionDelete() {
-//        AppSession.set("a", value: 1)
-//        AppSession.set("b", value: 2)
-//        
-//        AppSession.delete("a")
-//        XCTAssertEqual(1, AppSession.count)
-//        
-//        AppSession.delete("a")
-//        XCTAssertEqual(1, AppSession.count)
-//        
-//        AppSession.delete("b")
-//        XCTAssertEqual(0, AppSession.count)
-//    }
-//    
-//    func testAppSessionDeleteReferenceType() {
-//        /* WARNING: Storing reference types within AppSession could lead to accidental state changes */
-//        class BasicClass {
-//            var prop: Int
-//            
-//            init(prop: Int) {
-//                self.prop = prop
-//            }
-//            
-//            func method() -> String {
-//                return String(self.prop)
-//            }
-//        }
-//        let basicClass: BasicClass? = BasicClass(prop: 42)
-//        
-//        AppSession.set("bc", value: basicClass)
-//        
-//        basicClass?.prop = 53
-//        
-//        let basicClassFromSession = AppSession.get("bc") as? BasicClass
-//        
-//        AppSession.delete("bc")
-//        XCTAssertEqual(0, AppSession.count)
-//        
-//        XCTAssertEqual(basicClassFromSession?.method(), basicClass?.method())
-//    }
-//    
-//    func testAppSessionPop() {
-//        AppSession.set("a", value: 1)
-//        
-//        let fromSession =  AppSession.pop("a") as? Int
-//        XCTAssertEqual(1, fromSession)
-//        XCTAssertEqual(0, AppSession.count)
-//    }
-//    
-//    func testLowercaseSessionKeys() {
-//        AppSession.set("thekey", value: 22)
-//        
-//        let theValue = AppSession.get("thekey") as? Int
-//        let theValueAgain = AppSession.get("ThEkEy") as? Int
-//        
-//        XCTAssertEqual(theValue, theValueAgain)
-//        
-//        AppSession.set("name",      value: "taywils",   group: "user")
-//        AppSession.set("age",       value: 100,         group: "USER")
-//        AppSession.set("salary",    value: 777,         group: "uSeR")
-//        
-//        let userSession = AppSession.get("user") as? [String: Any]
-//        
-//        XCTAssertEqual("taywils", userSession?["name"] as? String)
-//        XCTAssertEqual(100, userSession?["age"] as? Int)
-//        XCTAssertEqual(777, userSession?["salary"] as? Int)
-//    }
-//    
-//    func testAppSessionContains() {
-//        AppSession.set("thekey", value: 22)
-//        
-//        AppSession.set("name",      value: "taywils",   group: "user")
-//        AppSession.set("age",       value: 100,         group: "USER")
-//        AppSession.set("salary",    value: 777,         group: "uSeR")
-//        
-//        XCTAssertTrue(AppSession.contains("USeR"))
-//        XCTAssertTrue(AppSession.contains("TheKey"))
-//        
-//        XCTAssertFalse(AppSession.contains("wawa"))
-//    }
-//    
-//    func testAppSessionSetNilValue() {
-//        let thing: String? = nil
-//        
-//        AppSession.set("nil_value", value: thing)
-//        XCTAssertEqual(1, AppSession.count)
-//        XCTAssertTrue(AppSession.contains("nil_value"))
-//        XCTAssertNil(AppSession.get("nil_value") as? String)
-//    }
+    func testAppSessionKeys() {
+        AppSession.set("a", value: 1)
+        AppSession.set("b", value: 2)
+        AppSession.set("c", value: 3)
+        
+        XCTAssertTrue(AppSession.keys.contains("a"))
+        XCTAssertTrue(AppSession.keys.contains("b"))
+        XCTAssertTrue(AppSession.keys.contains("c"))
+        
+        XCTAssertFalse(AppSession.keys.contains("d"))
+    }
+    
+    func testGroups() {
+        AppSession.set("main_dish", value: "Steak", group: "order")
+        AppSession.set("side_dish", value: "Salad", group: "order")
+        AppSession.set("coupon", value: "12231", group: "order")
+        
+        XCTAssertEqual(1, AppSession.count)
+        
+        let orderGroup = AppSession.get("order") as? [String:Any]
+        XCTAssertEqual(3, orderGroup?.count)
+        
+        let mainDishName = orderGroup?["main_dish"] as? String
+        XCTAssertEqual("Steak", mainDishName)
+        
+        let sideDishName = orderGroup?["side_dish"] as? String
+        XCTAssertEqual("Salad", sideDishName)
+        
+        let couponCode = orderGroup?["coupon"] as? String
+        XCTAssertEqual("12231", couponCode)
+    }
+    
+    func testAppSessionDelete() {
+        AppSession.set("a", value: 1)
+        AppSession.set("b", value: 2)
+        
+        AppSession.delete("a")
+        XCTAssertEqual(1, AppSession.count)
+        
+        AppSession.delete("a")
+        XCTAssertEqual(1, AppSession.count)
+        
+        AppSession.delete("b")
+        XCTAssertEqual(0, AppSession.count)
+    }
+    
+    func testAppSessionDeleteReferenceType() {
+        /* WARNING: Storing reference types within AppSession could lead to accidental state changes */
+        class BasicClass {
+            var prop: Int
+            
+            init(prop: Int) {
+                self.prop = prop
+            }
+            
+            func method() -> String {
+                return String(self.prop)
+            }
+        }
+        let basicClass: BasicClass? = BasicClass(prop: 42)
+        
+        AppSession.set("bc", value: basicClass)
+        
+        basicClass?.prop = 53
+        
+        let basicClassFromSession = AppSession.get("bc") as? BasicClass
+        
+        AppSession.delete("bc")
+        XCTAssertEqual(0, AppSession.count)
+        
+        XCTAssertEqual(basicClassFromSession?.method(), basicClass?.method())
+    }
+    
+    func testAppSessionPop() {
+        AppSession.set("a", value: 1)
+        
+        let fromSession =  AppSession.pop("a") as? Int
+        XCTAssertEqual(1, fromSession)
+        XCTAssertEqual(0, AppSession.count)
+    }
+    
+    func testLowercaseSessionKeys() {
+        AppSession.set("thekey", value: 22)
+        
+        let theValue = AppSession.get("thekey") as? Int
+        let theValueAgain = AppSession.get("ThEkEy") as? Int
+        
+        XCTAssertEqual(theValue, theValueAgain)
+        
+        AppSession.set("name",      value: "taywils",   group: "user")
+        AppSession.set("age",       value: 100,         group: "USER")
+        AppSession.set("salary",    value: 777,         group: "uSeR")
+        
+        let userSession = AppSession.get("user") as? [String: Any]
+        
+        XCTAssertEqual("taywils", userSession?["name"] as? String)
+        XCTAssertEqual(100, userSession?["age"] as? Int)
+        XCTAssertEqual(777, userSession?["salary"] as? Int)
+    }
+    
+    func testAppSessionContains() {
+        AppSession.set("thekey", value: 22)
+        
+        AppSession.set("name",      value: "taywils",   group: "user")
+        AppSession.set("age",       value: 100,         group: "USER")
+        AppSession.set("salary",    value: 777,         group: "uSeR")
+        
+        XCTAssertTrue(AppSession.contains("USeR"))
+        XCTAssertTrue(AppSession.contains("TheKey"))
+        
+        XCTAssertFalse(AppSession.contains("wawa"))
+    }
+    
+    func testAppSessionSetNilValue() {
+        let thing: String? = nil
+        
+        AppSession.set("nil_value", value: thing)
+        XCTAssertEqual(1, AppSession.count)
+        XCTAssertTrue(AppSession.contains("nil_value"))
+        XCTAssertNil(AppSession.get("nil_value") as? String)
+    }
 }
