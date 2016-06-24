@@ -16,10 +16,6 @@ AppSession is a simple wrapper around a dictionary type that allows one
 to easily share data across different SpriteKit Scenes and or ViewControllers
 for the duration of a single session of an App.
 
-## Planned Features
-* [ ] Manage Multiple Sessions
-* [ ] Async Operations
-
 ## Installation
 
 AppSession is available through [CocoaPods](http://cocoapods.org). To install
@@ -28,7 +24,9 @@ it, simply add the following line to your Podfile:
 ```ruby
 use_frameworks!
 
-pod 'AppSession', :git => 'https://github.com/taywils/SwiftAppSession.git'
+target "Your_Project_Target_Here" do
+  pod 'AppSession', '0.0.2'
+end
 ```
 
 # Basic Usage
@@ -38,7 +36,7 @@ AppSession uses the [sharedInstance](https://thatthinginswift.com/singletons/) p
 Thus there is no need for declaring any AppSession objects.
 
 ## Set
-Store something in AppSession
+Store something in AppSession using __set__
 
 ```swift
 let foobar = 42
@@ -46,21 +44,21 @@ AppSession.set("foo", value: foobar)
 ```
 
 ## Get
-Later on take something out of AppSession
+Later on take something out of AppSession with __get__
 
 ```swift
 let barFoo = AppSession.get("foo") as? Int
 ```
 
 ## Delete
-Use delete to get rid of something you don't need in AppSession anymore
+Use __delete__ to get rid of something you don't need in AppSession anymore
 
 ```swift
 AppSession.delete("foo")
 ```
 
 ## Group
-Use __group__ to reduce key collisions, or to mark data as related
+Use the __group__ parameter of __AppSession.set__ to reduce key collisions, or to mark data as related
 
 Example: Pretend we are on the menu page of a restaurant app
 
@@ -70,9 +68,24 @@ AppSession.set("side_dish", value: "Salad", group: "order")
 AppSession.set("coupon", value: "12231", group: "order")
 ```
 
-Now when you segue over to the checkout page, you pull the "order" from the AppSession
+Now when you segue over to the checkout page, you pull the "order" from the AppSession.
+Included with AppSession is a typealias __AppSessionGroup__
+
 ```swift
-let customerOrder = AppSession.get("order") as? [String:Any]
+typealias AppSessionGroup  = [String: Any]
+```
+Use the typealias when extracting groups from AppSession.
+
+```swift
+let customerOrder = AppSession.get("order") as? AppSessionGroup
+```
+
+From there you can then access the values since its a dictionary with Any
+
+```swift
+let mainDishName = customerOrder?["main_dish"] as? String
+let sideDishName = customerOrder?["side_dish"] as? String
+let couponCode   = customerOrder?["coupon"] as? String
 ```
 
 Then if the coupon causes some modal view to display over the checkout page that needs to update the order
@@ -180,6 +193,14 @@ Keys will return a __Set__ of all the keys
 AppSession.keys
 ```
 
+## Groups
+
+groups will return a __Set__ of all the group names as strings
+
+```swift
+AppSession.groups
+```
+
 ## Clear
 
 Completely wipes the entire AppSession.
@@ -196,6 +217,14 @@ Returns *true* if the given key exists in the current AppSession
 AppSession.contains("some_key")
 // This is equivalent to
 AppSession.keys.contains("some_key".lowercaseString)
+```
+
+## Info
+
+Prints a DEBUG dump of the current items stored within AppSession
+
+```swift
+AppSession.info
 ```
 
 # Why AppSession?
@@ -220,4 +249,3 @@ based on any arbitrary game data; I extracted the code from my game and re-named
 # License
 
 AppSession is available under the MIT license. See the LICENSE file for more info.
-
