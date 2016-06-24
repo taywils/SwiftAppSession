@@ -224,7 +224,7 @@ AppSession.keys.contains("some_key".lowercaseString)
 Prints a DEBUG dump of the current items stored within AppSession
 
 ```swift
-AppSession.info
+AppSession.info()
 ```
 
 # Why AppSession?
