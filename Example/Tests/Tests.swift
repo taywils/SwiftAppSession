@@ -14,9 +14,39 @@ class AppSessionTests: XCTestCase {
     
     func testAppSessionClear() {
         AppSession.set("clear_me", value: 9)
+        
         XCTAssertEqual(1, AppSession.count)
+        
         AppSession.clear()
+        
         XCTAssertEqual(0, AppSession.count)
+        
+        // AppSession.keys should be empty Sets after clear()
+        AppSession.set("a", value: 1)
+        AppSession.set("b", value: 2)
+        AppSession.set("c", value: 3)
+        
+        XCTAssertEqual(3, AppSession.keys.count)
+        
+        AppSession.clear()
+        XCTAssertEqual(0, AppSession.keys.count)
+        
+        // AppSession.groups should be empty Sets after clear()
+        AppSession.set("a", value: "A", group: "letters")
+        AppSession.set("b", value: "B", group: "letters")
+        AppSession.set("main_dish", value: "Steak", group: "order")
+        AppSession.set("side_dish", value: "Salad", group: "order")
+        AppSession.set("coupon", value: "12231", group: "order")
+        
+        XCTAssertEqual(2, AppSession.count)
+        XCTAssertEqual(2, AppSession.keys.count)
+        XCTAssertEqual(2, AppSession.groups.count)
+        
+        AppSession.clear()
+        
+        XCTAssertEqual(0, AppSession.count)
+        XCTAssertEqual(0, AppSession.keys.count)
+        XCTAssertEqual(0, AppSession.groups.count)
     }
     
     func testAppSessionSet() {
@@ -64,9 +94,8 @@ class AppSessionTests: XCTestCase {
         let primitiveType = "Bar"
         
         AppSession.set("foo", value: primitiveType)
-
-        let fooItem:AppItem<String> = AppSession.get("foo")
-        XCTAssertEqual(primitiveType, fooItem.value)
+        
+        XCTAssertEqual(primitiveType, AppSession.get("foo") as? String)
         
         struct BasicStruct {
             var property: String
@@ -76,12 +105,13 @@ class AppSessionTests: XCTestCase {
             }
         }
         let basicStruct = BasicStruct(property: "hello world")
-
+        
         AppSession.set("basic_struct", value: basicStruct)
-
-        let basicStructfromSession: AppItem<BasicStruct> = AppSession.get("basic_struct")
-        XCTAssertEqual(basicStructfromSession.value.property, basicStruct.property)
-
+        
+        let basicStructfromSession = AppSession.get("basic_struct") as? BasicStruct
+        
+        XCTAssertEqual(basicStructfromSession?.property, basicStruct.property)
+        
         let array3D: [[[Int]]] = [
             [[1, 2], [3, 4]],
             [[5, 6], [7, 8]]
@@ -89,15 +119,11 @@ class AppSessionTests: XCTestCase {
         
         AppSession.set("3d", value: array3D)
         
-        let array3dFromSession = AppSession.get("3d") as AppItem<[[[Int]]]>
-        XCTAssertEqual(array3D[0][1], array3dFromSession.value[0][1])
-        
-        var optionalInt: Int?
-        optionalInt = 42
-        AppSession.set("opt", value: optionalInt)
-        
-        let optionalIntFromSession: AppItem<Int?> = AppSession.get("opt")
-        XCTAssertEqual(optionalInt, optionalIntFromSession.value)
+        if let array3dFromSession = AppSession.get("3d") as? [[[Int]]] {
+            XCTAssertEqual(array3D[0][1], array3dFromSession[0][1])
+        } else {
+            XCTFail("Failed to store nested array type")
+        }
     }
     
     func testAppSessionReferenceValues() {
@@ -119,25 +145,21 @@ class AppSessionTests: XCTestCase {
         
         // Store the class in the session
         AppSession.set("basic_class", value: basicClass)
-        XCTAssertEqual("42", (AppSession.get("basic_class") as AppItem<BasicClass>).value.method())
-        AppSession.info()
+        
+        XCTAssertEqual("42", (AppSession.get("basic_class") as? BasicClass)?.method())
+        
         // Outside of the session update the class
         let nuValue = 777
         basicClass?.prop = nuValue
-
+        
         // Pull the class data out from the session
-        let basicClassFromSession = (AppSession.get("basic_class") as AppItem<BasicClass>).value
+        let basicClassFromSession = AppSession.get("basic_class") as? BasicClass
         
         // The class data pulled from the session should be updated since it shares a reference with the original class
-        XCTAssertEqual(String(nuValue), basicClassFromSession.method())
-        XCTAssertNotEqual(String(ogValue), basicClassFromSession.method())
+        XCTAssertEqual(String(nuValue), basicClassFromSession?.method())
+        XCTAssertNotEqual(String(ogValue), basicClassFromSession?.method())
     }
     
-    func testAppSessionStructWithClassAsProp() {
-        
-    }
-    
-    /*
     func testAppSessionCopyValues() {
         let ogValue = "og"
         let nuValue = "nv"
@@ -166,13 +188,14 @@ class AppSessionTests: XCTestCase {
     }
     
     func testGroups() {
+        AppSession.set("main_dish", value: "Pasta")
         AppSession.set("main_dish", value: "Steak", group: "order")
         AppSession.set("side_dish", value: "Salad", group: "order")
         AppSession.set("coupon", value: "12231", group: "order")
         
-        XCTAssertEqual(1, AppSession.count)
+        XCTAssertEqual(2, AppSession.count)
         
-        let orderGroup = AppSession.get("order") as? [String:Any]
+        let orderGroup = AppSession.get("order") as? AppSessionGroup
         XCTAssertEqual(3, orderGroup?.count)
         
         let mainDishName = orderGroup?["main_dish"] as? String
@@ -183,6 +206,45 @@ class AppSessionTests: XCTestCase {
         
         let couponCode = orderGroup?["coupon"] as? String
         XCTAssertEqual("12231", couponCode)
+        
+        AppSession.delete("order")
+        XCTAssertEqual(1, AppSession.count)
+    }
+    
+    func testKeySetWithSameNameAsExistingShouldOverwrite() {
+        AppSession.set("fruit", value: "Apple")
+        AppSession.set("fruit", value: "Orange")
+
+        XCTAssertEqual("Orange", AppSession.get("fruit") as? String)
+        XCTAssertEqual(1, AppSession.count)
+        
+        AppSession.clear()
+        
+        // Swap the 'AppSession.set' order
+        AppSession.set("fruit", value: "Orange")
+        AppSession.set("fruit", value: "Apple")
+
+        XCTAssertEqual("Apple", AppSession.get("fruit") as? String)
+        XCTAssertEqual(1, AppSession.count)
+    }
+    
+    func testSameGroupNameAsNonGroupKeyShouldOverwrite() {
+        AppSession.set("a", value: "A", group: "letters")
+        AppSession.set("b", value: "B", group: "letters")
+        AppSession.set("letters", value: "ABC")
+        
+        XCTAssertEqual(1, AppSession.count)
+        XCTAssertEqual("ABC", AppSession.get("letters") as? String)
+        
+        AppSession.clear()
+        
+        // Swap the 'AppSession.set' order
+        AppSession.set("letters", value: "ABC")
+        AppSession.set("a", value: "A", group: "letters")
+        AppSession.set("b", value: "B", group: "letters")
+
+        XCTAssertEqual(1, AppSession.count)
+        XCTAssertEqual(2, (AppSession.get("letters") as? AppSessionGroup)?.count)
     }
     
     func testAppSessionDelete() {
@@ -246,7 +308,7 @@ class AppSessionTests: XCTestCase {
         AppSession.set("age",       value: 100,         group: "USER")
         AppSession.set("salary",    value: 777,         group: "uSeR")
         
-        let userSession = AppSession.get("user") as? [String: Any]
+        let userSession = AppSession.get("user") as? AppSessionGroup
         
         XCTAssertEqual("taywils", userSession?["name"] as? String)
         XCTAssertEqual(100, userSession?["age"] as? Int)
@@ -263,7 +325,15 @@ class AppSessionTests: XCTestCase {
         XCTAssertTrue(AppSession.contains("USeR"))
         XCTAssertTrue(AppSession.contains("TheKey"))
         
+        AppSession.info()
+        
         XCTAssertFalse(AppSession.contains("wawa"))
+        
+        AppSession.delete("user")
+        XCTAssertEqual(false, AppSession.contains("user"))
+        XCTAssertEqual(1, AppSession.count)
+        
+        AppSession.info()
     }
     
     func testAppSessionSetNilValue() {
@@ -274,5 +344,4 @@ class AppSessionTests: XCTestCase {
         XCTAssertTrue(AppSession.contains("nil_value"))
         XCTAssertNil(AppSession.get("nil_value") as? String)
     }
-    */
 }
