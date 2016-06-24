@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
   s.name             = "AppSession"
-  s.version          = "0.0.1"
+  s.version          = "0.1.0"
   s.summary          = "A lightweight key-value store to share data across ViewControllers and or SKScenes"
-  s.description      = "A lightweight key-value store to share data across ViewControllers and or SKScenes; combine it with a caching API for greater performance."
+  s.description      = "A lightweight key-value store to share data across ViewControllers and or SKScenes"
   s.homepage         = "https://github.com/taywils/SwiftAppSession"
   s.license          = { :type => "MIT", :file => "LICENSE" }
   s.author           = { "taywils" => "DemetriousWilson@gmail.com" }

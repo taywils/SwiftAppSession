@@ -25,7 +25,7 @@ it, simply add the following line to your Podfile:
 use_frameworks!
 
 target "Your_Project_Target_Here" do
-  pod 'AppSession', '0.0.2'
+  pod 'AppSession', '0.1.0'
 end
 ```
 
