@@ -1,6 +1,6 @@
 import Foundation
 
-typealias AppSessionGroup  = [String: Any]
+public typealias AppSessionGroup  = [String: Any]
 
 /// ### AppSession
 /// A simple wrapper around a dictionary type that allows one to easily share data
@@ -61,8 +61,7 @@ public class AppSession {
         
         let theKey = key.lowercaseString
         let theGroup = group.lowercaseString
-        
-        AppSession.sharedInstance._infos.append(AppSessionInfoObj(key: theKey, valueType: String(T.self), group: theGroup))
+
         
         if !group.isEmpty {
             let groupDoesntExist = !AppSession.sharedInstance._groupNames.contains(theGroup)
@@ -70,16 +69,25 @@ public class AppSession {
             
             if groupDoesntExist && keyExistsWithGroupName {
                 AppSession.delete(theGroup)
+            } else if keyExistsWithGroupName {
+                // Overwriting the group
+                AppSession.removeInfoObjByKeyInGroup(theKey, groupName: theGroup)
             }
             
             AppSession.sharedInstance._groupNames.insert(theGroup)
             AppSession.appendGroupValue(theKey, value: value, groupKey: theGroup)
         } else {
-            if AppSession.sharedInstance._groupNames.contains(theKey) {
+            let groupNameWithKeyExists = AppSession.sharedInstance._groupNames.contains(theKey)
+            let theKeyIsCurrentlyInUse = AppSession.contains(theKey)
+            
+            if groupNameWithKeyExists || theKeyIsCurrentlyInUse {
                 AppSession.delete(theKey)
             }
+
             AppSession.sharedInstance._storage[theKey] = value
         }
+        
+        AppSession.sharedInstance._infos.append(AppSessionInfoObj(key: theKey, valueType: String(T.self), group: theGroup))
     }
     
     /// Returns a value from the AppSession based on the key
@@ -177,6 +185,18 @@ public class AppSession {
         }
 
         AppSession.sharedInstance._infos = newInfos
+    }
+    
+    /// Removes a single AppSessionInfoObj from the _infos array by key and group
+    /// - Parameter key: Name used to reference the AppSessionInfoObj
+    /// - Parameter clearGroup: True will remove all AppSessionInfoObj with group
+    private static func removeInfoObjByKeyInGroup(key: String, groupName: String) {
+        for (index, infoObj) in AppSession.sharedInstance._infos.enumerate() {
+            if infoObj.group == groupName && infoObj.key == key {
+                AppSession.sharedInstance._infos.removeAtIndex(index)
+                return
+            }
+        }
     }
     
     /// [http://stackoverflow.com/questions/27989094/how-to-unwrap-an-optional-value-from-any-type](http://stackoverflow.com/questions/27989094)

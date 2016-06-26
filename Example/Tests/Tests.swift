@@ -322,18 +322,16 @@ class AppSessionTests: XCTestCase {
         AppSession.set("age",       value: 100,         group: "USER")
         AppSession.set("salary",    value: 777,         group: "uSeR")
         
-        XCTAssertTrue(AppSession.contains("USeR"))
-        XCTAssertTrue(AppSession.contains("TheKey"))
-        
         AppSession.info()
         
+        XCTAssertTrue(AppSession.contains("USeR"))
+        XCTAssertTrue(AppSession.contains("TheKey"))
+
         XCTAssertFalse(AppSession.contains("wawa"))
         
         AppSession.delete("user")
         XCTAssertEqual(false, AppSession.contains("user"))
         XCTAssertEqual(1, AppSession.count)
-        
-        AppSession.info()
     }
     
     func testAppSessionSetNilValue() {
@@ -343,5 +341,19 @@ class AppSessionTests: XCTestCase {
         XCTAssertEqual(1, AppSession.count)
         XCTAssertTrue(AppSession.contains("nil_value"))
         XCTAssertNil(AppSession.get("nil_value") as? String)
+    }
+    
+    func testAppSessionInfoOutput() {
+        AppSession.set("thekey", value: 22)
+        AppSession.set("name",      value: "taywils",   group: "user")
+        AppSession.set("age",       value: 100,         group: "USER")
+        AppSession.set("salary",    value: 777,         group: "uSeR")
+        AppSession.info()
+        
+        AppSession.set("thekey", value: "dog")
+        AppSession.set("name",      value: "taywils",   group: "user")
+        AppSession.set("age",       value: 100,         group: "USER")
+        AppSession.set("salary",    value: 777,         group: "uSeR")
+        AppSession.info()
     }
 }
