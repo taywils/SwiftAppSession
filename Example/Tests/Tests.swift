@@ -32,11 +32,11 @@ class AppSessionTests: XCTestCase {
         XCTAssertEqual(0, AppSession.keys.count)
         
         // AppSession.groups should be empty Sets after clear()
-        AppSession.set("a", value: "A", group: "letters")
-        AppSession.set("b", value: "B", group: "letters")
+        AppSession.set("a",         value: "A",     group: "letters")
+        AppSession.set("b",         value: "B",     group: "letters")
         AppSession.set("main_dish", value: "Steak", group: "order")
         AppSession.set("side_dish", value: "Salad", group: "order")
-        AppSession.set("coupon", value: "12231", group: "order")
+        AppSession.set("coupon",    value: "12231", group: "order")
         
         XCTAssertEqual(2, AppSession.count)
         XCTAssertEqual(2, AppSession.keys.count)
@@ -51,13 +51,13 @@ class AppSessionTests: XCTestCase {
     
     func testAppSessionSet() {
         let primitiveTypes:[String: Any] = [
-            "int": Int(-100),
-            "uInt": UInt(100),
-            "float": Float(100.0),
-            "double": Double(100.0),
-            "bool": false,
-            "character": Character("a"),
-            "string": String("taywils")
+            "int":          Int(-100),
+            "uInt":         UInt(100),
+            "float":        Float(100.0),
+            "double":       Double(100.0),
+            "bool":         false,
+            "character":    Character("a"),
+            "string":       String("taywils")
         ]
         
         AppSession.set("some_int", value: primitiveTypes["int"])
@@ -191,7 +191,7 @@ class AppSessionTests: XCTestCase {
         AppSession.set("main_dish", value: "Pasta")
         AppSession.set("main_dish", value: "Steak", group: "order")
         AppSession.set("side_dish", value: "Salad", group: "order")
-        AppSession.set("coupon", value: "12231", group: "order")
+        AppSession.set("coupon",    value: "12231", group: "order")
         
         XCTAssertEqual(2, AppSession.count)
         
@@ -229,9 +229,9 @@ class AppSessionTests: XCTestCase {
     }
     
     func testSameGroupNameAsNonGroupKeyShouldOverwrite() {
-        AppSession.set("a", value: "A", group: "letters")
-        AppSession.set("b", value: "B", group: "letters")
-        AppSession.set("letters", value: "ABC")
+        AppSession.set("a",         value: "A", group: "letters")
+        AppSession.set("b",         value: "B", group: "letters")
+        AppSession.set("letters",   value: "ABC")
         
         XCTAssertEqual(1, AppSession.count)
         XCTAssertEqual("ABC", AppSession.get("letters") as? String)
@@ -239,9 +239,9 @@ class AppSessionTests: XCTestCase {
         AppSession.clear()
         
         // Swap the 'AppSession.set' order
-        AppSession.set("letters", value: "ABC")
-        AppSession.set("a", value: "A", group: "letters")
-        AppSession.set("b", value: "B", group: "letters")
+        AppSession.set("letters",   value: "ABC")
+        AppSession.set("a",         value: "A", group: "letters")
+        AppSession.set("b",         value: "B", group: "letters")
 
         XCTAssertEqual(1, AppSession.count)
         XCTAssertEqual(2, (AppSession.get("letters") as? AppSessionGroup)?.count)
@@ -344,13 +344,13 @@ class AppSessionTests: XCTestCase {
     }
     
     func testAppSessionInfoOutput() {
-        AppSession.set("thekey", value: 22)
+        AppSession.set("thekey",    value: 22)
         AppSession.set("name",      value: "taywils",   group: "user")
         AppSession.set("age",       value: 100,         group: "USER")
         AppSession.set("salary",    value: 777,         group: "uSeR")
         AppSession.info()
         
-        AppSession.set("thekey", value: "dog")
+        AppSession.set("thekey",    value: "dog")
         AppSession.set("name",      value: "taywils",   group: "user")
         AppSession.set("age",       value: 100,         group: "USER")
         AppSession.set("salary",    value: 777,         group: "uSeR")
