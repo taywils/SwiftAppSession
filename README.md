@@ -18,6 +18,8 @@ for the duration of a single session of an App.
 
 ## Installation
 
+### CocoaPods
+
 AppSession is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
@@ -25,9 +27,13 @@ it, simply add the following line to your Podfile:
 use_frameworks!
 
 target "Your_Project_Target_Here" do
-  pod 'AppSession', '0.1.1'
+  pod 'AppSession', '0.2.0'
 end
 ```
+
+### Carthage
+
+Comming soon...
 
 # Basic Usage
 
