@@ -7,7 +7,7 @@
     <a href="https://developer.apple.com/swift"><img src="https://img.shields.io/badge/language-swift3-f48041.svg?style=flat" alt="Language: Swift 2" /></a>
     <img src="http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat" alt="License: MIT" />
     <a href="http://cocoadocs.org/docsets/AppSession"><img src="https://cocoapod-badges.herokuapp.com/v/AppSession/badge.png" alt="Docs" /></a>
-
+    <a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" alt="Carthage compatible" /></a>
 </p>
 
 # Introduction
@@ -24,16 +24,22 @@ AppSession is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-use_frameworks!
-
-target "Your_Project_Target_Here" do
-  pod 'AppSession', '0.2.0'
-end
+pod 'AppSession', '0.2.0'
 ```
 
 ### Carthage
 
-Comming soon...
+Modify your "Cartfile" to include the following line
+
+```
+github "taywils/SwiftAppSession" "0.2.0"
+```
+
+Then run the command from the base directory of your project where the Cartfile is located
+
+```
+carthage update SwiftAppSession
+```
 
 # Basic Usage
 
